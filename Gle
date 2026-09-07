@@ -1,0 +1,39 @@
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local canDoubleJump = false
+local hasDoubleJumped = false
+local TIME_BETWEEN_JUMPS = 0.2
+local DOUBLE_JUMP_POWER = 50
+
+local function onStateChanged(oldState, newState)
+	if newState == Enum.HumanoidStateType.Landed then
+		canDoubleJump = false
+		hasDoubleJumped = false
+	elseif newState == Enum.HumanoidStateType.Freefall then
+		task.wait(TIME_BETWEEN_JUMPS)
+		if humanoid:GetState() == Enum.HumanoidStateType.Freefall and not hasDoubleJumped then
+			canDoubleJump = true
+		end
+	end
+end
+
+local function onJumpRequest()
+	if canDoubleJump and not hasDoubleJumped then
+		hasDoubleJumped = true
+		canDoubleJump = false
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.new(
+			character.HumanoidRootPart.AssemblyLinearVelocity.X,
+			DOUBLE_JUMP_POWER,
+			character.HumanoidRootPart.AssemblyLinearVelocity.Z
+		)
+	end
+end
+
+humanoid.StateChanged:Connect(onStateChanged)
+UserInputService.JumpRequest:Connect(onJumpRequest)
